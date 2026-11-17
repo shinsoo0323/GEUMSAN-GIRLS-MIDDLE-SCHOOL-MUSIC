@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 금산여중 복면 가왕</title>
+    
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    
+    <!-- Tailwind CSS & DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        /* 부드러운 전환 및 애니메이션 효과 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        .podium-1 {
+            background: linear-gradient(135deg, #FDE047 0%, #F59E0B 100%);
+        }
+        .podium-2 {
+            background: linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
+        }
+        .podium-3 {
+            background: linear-gradient(135deg, #FED7AA 0%, #D97706 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-base-200/70 text-base-content flex flex-col">
+
+    <!-- 상단 네비게이션 바 -->
+    <header class="navbar bg-base-100 shadow-sm sticky top-0 z-40 px-4 sm:px-8 border-b border-base-300">
+        <div class="flex-1 gap-2 items-center">
+            <div class="bg-primary text-primary-content p-2.5 rounded-2xl shadow-sm animate-float">
+                <i data-lucide="crown" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-primary tracking-wider block">GEUMSAN GIRLS' MIDDLE SCHOOL</span>
+                <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-base-content">
+                    2026 금산여중 복면 가왕
+                </h1>
+            </div>
+        </div>
+        
+        <div class="flex-none flex items-center gap-2">
+            <!-- 실시간 총 투표수 뱃지 -->
+            <div class="badge badge-secondary badge-lg gap-1.5 py-4 px-3 font-bold shadow-sm">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">총 투표수:</span>
+                <span id="header-total-votes" class="text-base">0</span>표
+            </div>
+
+            <!-- 모드 전환 탭 (관리자 / 학생 투표 화면 미리보기) -->
+            <div class="join bg-base-200 p-1 rounded-2xl">
+                <button id="btn-mode-admin" onclick="switchMode('admin')" class="btn btn-sm join-item btn-primary rounded-xl gap-1">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span class="hidden md:inline">진행자 화면</span>
+                </button>
+                <button id="btn-mode-student" onclick="switchMode('student')" class="btn btn-sm join-item btn-ghost rounded-xl gap-1">
+                    <i data-lucide="smartphone" class="w-4 h-4"></i>
+                    <span class="hidden md:inline">학생 투표 화면</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 알림 토스트 컨테이너 -->
+    <div id="toast-container" class="toast toast-top toast-center z-50"></div>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ========================================== -->
+        <!-- 1. 진행자(선생님) 대시보드 모드              -->
+        <!-- ========================================== -->
+        <div id="admin-view" class="space-y-6">
+            
+            <!-- 상단 컨트롤 패널: 타이머 + QR 코드 + 실시간 현황 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- 왼쪽: QR 코드 & 투표 시간 타이머 설정 카드 (7 cols) -->
+                <div class="lg:col-span-7 card bg-base-100 shadow-md border border-base-300 rounded-3xl overflow-hidden">
+                    <div class="card-body p-6 sm:p-8">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <h2 class="card-title text-xl font-extrabold flex items-center gap-2">
+                                <span class="p-2 bg-primary/15 text-primary rounded-xl">
+                                    <i data-lucide="qr-code" class="w-5 h-5"></i>
+                                </span>
+                                학생 투표 QR 및 타이머 설정
+                            </h2>
+                            <span id="voting-status-badge" class="badge badge-neutral font-semibold py-3 px-3">투표 대기 중</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <!-- QR 코드 표시 영역 -->
+                            <div class="flex flex-col items-center justify-center bg-base-200/80 p-5 rounded-3xl border-2 border-dashed border-primary/40">
+                                <div id="qrcode-wrapper" class="bg-white p-3.5 rounded-2xl shadow-sm">
+                                    <div id="qrcode"></div>
+                                </div>
+                                <p class="text-xs text-base-content/70 mt-3 text-center font-medium">
+                                    스마트폰 카메라로 스캔하여 투표 참여
+                                </p>
+                                <div class="flex gap-2 mt-3 w-full">
+                                    <button onclick="openQrZoomModal()" class="btn btn-xs btn-outline btn-primary flex-1 rounded-xl gap-1">
+                                        <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> 크게 보기
+                                    </button>
+                                    <button onclick="openCustomQrModal()" class="btn btn-xs btn-ghost flex-1 rounded-xl gap-1">
+                                        <i data-lucide="link" class="w-3.5 h-3.5"></i> 주소 설정
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 타이머 설정 및 컨트롤 영역 -->
+                            <div class="flex flex-col justify-between space-y-4">
+                                <!-- 카운트다운 디스플레이 -->
+                                <div class="bg-neutral text-neutral-content rounded-3xl p-5 text-center shadow-inner relative overflow-hidden">
+                                    <div class="text-xs uppercase tracking-widest opacity-70 font-semibold mb-1">남은 투표 시간</div>
+                                    <div id="timer-display" class="text-5xl sm:text-6xl font-black tracking-tight font-mono text-primary">
+                                        03:00
+                                    </div>
+                                    <progress id="timer-progress" class="progress progress-primary w-full mt-3 h-2" value="100" max="100"></progress>
+                                </div>
+
+                                <!-- 시간 설정 입력 (타이머 정지 시 활성화) -->
+                                <div id="timer-inputs" class="flex items-center justify-center gap-2 bg-base-200 p-2.5 rounded-2xl">
+                                    <i data-lucide="clock" class="w-4 h-4 text-base-content/70 ml-1"></i>
+                                    <input type="number" id="input-minutes" min="0" max="60" value="3" class="input input-bordered input-sm w-16 text-center font-bold rounded-xl" />
+                                    <span class="font-bold text-sm">분</span>
+                                    <input type="number" id="input-seconds" min="0" max="59" value="0" class="input input-bordered input-sm w-16 text-center font-bold rounded-xl" />
+                                    <span class="font-bold text-sm">초</span>
+                                    <button onclick="applyTimerSetting()" class="btn btn-sm btn-ghost text-primary font-bold rounded-xl">적용</button>
+                                </div>
+
+                                <!-- 타이머 시작 / 일시정지 / 초기화 버튼 -->
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button id="btn-timer-toggle" onclick="toggleTimer()" class="btn btn-primary rounded-2xl font-bold gap-1.5 shadow-sm">
+                                        <i data-lucide="play" class="w-4 h-4"></i>
+                                        <span>투표 시작</span>
+                                    </button>
+                                    <button onclick="resetTimer()" class="btn btn-outline rounded-2xl font-bold gap-1.5">
+                                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                        <span>시간 리셋</span>
+                                    </button>
+                                </div>
+
+                                <!-- 시간 완료 시 나타나는 결과 확인 버튼 -->
+                                <button id="btn-show-results" onclick="openResultsModal()" class="btn btn-accent btn-lg rounded-2xl font-extrabold gap-2 shadow-md hidden animate-bounce">
+                                    <i data-lucide="trophy" class="w-5 h-5"></i>
+                                    투표 결과 확인하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 전교생 투표 참여 현황 전광판 (5 cols) -->
+                <div class="lg:col-span-5 card bg-base-100 shadow-md border border-base-300 rounded-3xl">
+                    <div class="card-body p-6 sm:p-8 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="card-title text-xl font-extrabold flex items-center gap-2">
+                                    <span class="p-2 bg-secondary/15 text-secondary rounded-xl">
+                                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                                    </span>
+                                    전교생 투표 참여 현황
+                                </h2>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-success"></span>
+                                    </span>
+                                    <span class="text-xs font-bold text-success">실시간 집계중</span>
+                                </div>
+                            </div>
+
+                            <!-- 전교생 총 인원수 설정 입력란 -->
+                            <div class="flex items-center justify-between bg-base-200/80 p-3 rounded-2xl mb-4">
+                                <span class="text-sm font-bold flex items-center gap-1.5 text-base-content/80">
+                                    <i data-lucide="school" class="w-4 h-4 text-primary"></i>
+                                    전교생 총 인원수
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="input-total-students" min="1" max="5000" value="100" onchange="updateTotalStudents()" class="input input-bordered input-sm w-20 text-center font-extrabold rounded-xl bg-base-100" />
+                                    <span class="text-sm font-bold">명</span>
+                                    <button onclick="updateTotalStudents()" class="btn btn-xs btn-primary rounded-lg ml-1">적용</button>
+                                </div>
+                            </div>
+
+                            <!-- 투표 완료 인원 및 투표율 시각화 카드 -->
+                            <div class="bg-gradient-to-br from-secondary/10 via-base-200/60 to-primary/10 border border-secondary/20 rounded-3xl p-5 text-center space-y-3">
+                                <div class="text-xs font-bold text-base-content/60">현재 투표 완료 인원</div>
+                                <div class="flex items-baseline justify-center gap-1.5">
+                                    <span id="voted-count-display" class="text-5xl font-black text-secondary tracking-tight">0</span>
+                                    <span class="text-lg font-bold text-base-content/60">/ <span id="total-students-display">100</span>명</span>
+                                </div>
+
+                                <!-- 투표율 진행 바 -->
+                                <div class="space-y-1.5 pt-1">
+                                    <div class="flex justify-between text-xs font-bold px-1">
+                                        <span class="text-secondary">투표율 <span id="turnout-percent-display">0</span>%</span>
+                                        <span class="text-base-content/60">미참여 <span id="remaining-students-display">100</span>명</span>
+                                    </div>
+                                    <progress id="turnout-progress" class="progress progress-secondary w-full h-3.5 shadow-inner" value="0" max="100"></progress>
+                                </div>
+
+                                <p class="text-[11px] text-base-content/60 pt-1 flex items-center justify-center gap-1">
+                                    <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                                    공정한 진행을 위해 득표 순위는 투표 종료 후 공개됩니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 하단 유틸리티 (시뮬레이션 투표 테스트 및 투표 초기화) -->
+                        <div class="pt-4 mt-4 border-t border-base-200 flex flex-wrap items-center justify-between gap-2">
+                            <button onclick="simulateStudentVotes(15)" class="btn btn-xs btn-ghost text-info gap-1 rounded-xl" title="학생들이 투표하는 상황을 시뮬레이션합니다">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 가상 학생 +15명 투표 테스트
+                            </button>
+                            <button onclick="openResetVotesModal()" class="btn btn-xs btn-ghost text-error gap-1 rounded-xl">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 투표 현황 초기화
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 섹션: 복면 가왕 참가팀 관리 (팀명, 사진, 설명 추가) -->
+            <div class="card bg-base-100 shadow-md border border-base-300 rounded-3xl">
+                <div class="card-body p-6 sm:p-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="card-title text-xl font-extrabold flex items-center gap-2">
+                                <span class="p-2 bg-accent/15 text-accent rounded-xl">
+                                    <i data-lucide="mic-2" class="w-5 h-5"></i>
+                                </span>
+                                복면 가왕 참가팀 목록 (<span id="team-count">0</span>팀)
+                            </h2>
+                            <p class="text-sm text-base-content/70 mt-1">
+                                아직 정해지지 않은 참가팀을 자유롭게 추가하고 사진과 소개를 입력해 주세요.
+                            </p>
+                        </div>
+                        <button onclick="openAddTeamModal()" class="btn btn-primary rounded-2xl font-bold gap-2 shadow-sm">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                            새 참가팀 추가하기
+                        </button>
+                    </div>
+
+                    <!-- 참가팀 카드 그리드 -->
+                    <div id="admin-teams-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        <!-- JS로 동적 렌더링 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- 2. 학생 모바일 투표 화면 모드                -->
+        <!-- ========================================== -->
+        <div id="student-view" class="hidden max-w-2xl mx-auto space-y-6">
+            
+            <!-- 학생 화면 안내 배너 -->
+            <div class="card bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 border border-primary/30 rounded-3xl shadow-sm">
+                <div class="card-body p-6 text-center">
+                    <div class="inline-flex items-center justify-center gap-1.5 badge badge-primary font-bold mx-auto mb-2 py-3 px-4">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        1인 1표 소중한 한 표!
+                    </div>
+                    <h2 class="text-2xl font-black text-base-content">최고의 복면 가왕을 뽑아주세요!</h2>
+                    <p class="text-sm text-base-content/80 mt-1">
+                        가장 멋진 무대를 보여준 팀을 선택해 주세요. <br class="sm:hidden" />투표는 <strong>딱 1번만</strong> 참여할 수 있습니다.
+                    </p>
+
+                    <!-- 학생 화면 남은 시간 표시 -->
+                    <div class="mt-4 inline-flex items-center justify-center gap-2 bg-base-100/90 px-4 py-2 rounded-2xl shadow-sm mx-auto">
+                        <i data-lucide="timer" class="w-4 h-4 text-primary"></i>
+                        <span class="text-xs font-bold text-base-content/70">남은 시간:</span>
+                        <span id="student-timer-display" class="font-mono font-extrabold text-base text-primary">03:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 이미 투표를 완료한 경우 표시되는 완료 카드 -->
+            <div id="student-voted-banner" class="hidden card bg-success/15 border-2 border-success rounded-3xl shadow-sm">
+                <div class="card-body p-6 text-center items-center">
+                    <div class="w-14 h-14 rounded-full bg-success text-success-content flex items-center justify-center mb-2 shadow">
+                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-success-content">투표가 완료되었습니다!</h3>
+                    <p class="text-sm text-base-content/80">
+                        내가 투표한 팀: <span id="my-voted-team-name" class="font-extrabold text-primary underline"></span>
+                    </p>
+                    <p class="text-xs text-base-content/60 mt-1">
+                        중복 투표는 불가능합니다. 잠시 후 발표되는 결과를 기대해 주세요!
+                    </p>
+                    <!-- 시연/테스트용 재투표 초기화 버튼 -->
+                    <button onclick="resetMyStudentVote()" class="btn btn-xs btn-ghost mt-3 text-base-content/50">
+                        (테스트용: 내 투표 기록 초기화)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 투표 시간이 종료된 경우 안내 -->
+            <div id="student-closed-banner" class="hidden card bg-error/15 border-2 border-error rounded-3xl shadow-sm">
+                <div class="card-body p-6 text-center items-center">
+                    <div class="w-14 h-14 rounded-full bg-error text-error-content flex items-center justify-center mb-2">
+                        <i data-lucide="alarm-clock-off" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-error">투표 시간이 종료되었습니다!</h3>
+                    <p class="text-sm text-base-content/80">
+                        전광판에서 2026 금산여중 복면 가왕 최종 결과를 확인하세요!
+                    </p>
+                    <button onclick="openResultsModal()" class="btn btn-accent btn-sm rounded-2xl mt-2 font-bold gap-1.5">
+                        <i data-lucide="trophy" class="w-4 h-4"></i> 순위 결과 보기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 학생 투표 선택지 리스트 -->
+            <div id="student-teams-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- JS로 동적 렌더링 -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- 모달 1: 새 참가팀 추가 모달                  -->
+    <!-- ========================================== -->
+    <dialog id="modal-add-team" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box rounded-3xl p-6 sm:p-8 max-w-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-extrabold text-xl flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-primary"></i>
+                    복면 가왕 참가팀 추가
+                </h3>
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </form>
+            </div>
+
+            <form id="form-add-team" onsubmit="handleAddTeam(event)" class="space-y-4">
+                <!-- 팀명 입력 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-bold">참가팀 이름 (복면 닉네임) <span class="text-error">*</span></span>
+                    </label>
+                    <input type="text" id="team-name" required placeholder="예: 황금 가면 꾀꼬리, 신비한 달토끼" class="input input-bordered rounded-2xl w-full focus:input-primary" />
+                </div>
+
+                <!-- 사진 업로드 또는 기본 아바타 선택 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-bold">팀 대표 사진</span>
+                        <span class="label-text-alt text-base-content/60">미선택 시 기본 가면 이미지 적용</span>
+                    </label>
+                    <div class="flex items-center gap-4 bg-base-200 p-3 rounded-2xl">
+                        <img id="preview-team-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=mask1&backgroundColor=ffd5dc" alt="미리보기" class="w-16 h-16 rounded-2xl object-cover bg-base-100 border border-base-300 shrink-0" />
+                        <div class="flex-1 space-y-2">
+                            <input type="file" id="team-photo-file" accept="image/*" onchange="previewUploadedImage(event)" class="file-input file-input-bordered file-input-primary file-input-xs w-full rounded-xl" />
+                            <button type="button" onclick="pickRandomMaskAvatar()" class="btn btn-xs btn-outline btn-secondary rounded-xl gap-1">
+                                <i data-lucide="shuffle" class="w-3 h-3"></i> 귀여운 랜덤 캐릭터 변경
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 팀 설명 입력 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-bold">팀 설명 및 각오 <span class="text-error">*</span></span>
+                    </label>
+                    <textarea id="team-desc" required rows="3" placeholder="예: 2학년 3반의 숨은 실력자! 감미로운 발라드로 여러분의 마음을 울리겠습니다." class="textarea textarea-bordered rounded-2xl w-full focus:textarea-primary"></textarea>
+                </div>
+
+                <div class="modal-action pt-2">
+                    <button type="button" onclick="document.getElementById('modal-add-team').close()" class="btn btn-ghost rounded-2xl">취소</button>
+                    <button type="submit" class="btn btn-primary rounded-2xl font-bold px-6">참가팀 등록하기</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- ========================================== -->
+    <!-- 모달 2: QR 코드 확대 전광판 모달             -->
+    <!-- ========================================== -->
+    <dialog id="modal-qr-zoom" class="modal">
+        <div class="modal-box rounded-3xl text-center p-8 max-w-md bg-base-100">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">✕</button>
+            </form>
+            <div class="badge badge-primary font-bold py-3 px-4 mb-2">2026 금산여중 복면 가왕</div>
+            <h3 class="text-2xl font-black mb-1">지금 바로 투표하세요!</h3>
+            <p class="text-sm text-base-content/70 mb-6">카메라로 아래 QR 코드를 스캔해 주세요 (1인 1표)</p>
+            
+            <div class="bg-white p-6 rounded-3xl shadow-md inline-block border-4 border-primary/30">
+                <div id="qrcode-large"></div>
+            </div>
+
+            <div class="mt-6 bg-neutral text-neutral-content py-3 px-6 rounded-2xl inline-flex items-center gap-3">
+                <i data-lucide="clock" class="w-5 h-5 text-primary"></i>
+                <span class="font-bold text-sm">남은 시간</span>
+                <span id="modal-timer-display" class="text-2xl font-black font-mono text-primary">03:00</span>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- ========================================== -->
+    <!-- 모달 3: QR 코드 연결 URL 커스텀 설정 모달    -->
+    <!-- ========================================== -->
+    <dialog id="modal-qr-url" class="modal">
+        <div class="modal-box rounded-3xl p-6 max-w-md">
+            <h3 class="font-extrabold text-lg flex items-center gap-2 mb-2">
+                <i data-lucide="link" class="w-5 h-5 text-primary"></i>
+                QR 코드 연결 주소(URL) 설정
+            </h3>
+            <p class="text-xs text-base-content/70 mb-4">
+                현재 페이지가 웹에 배포된 경우 자동으로 학생 투표 주소가 연결됩니다. 별도의 링크가 있다면 아래에 입력해 주세요.
+            </p>
+            <input type="url" id="input-qr-url" class="input input-bordered rounded-2xl w-full text-sm mb-4" placeholder="https://..." />
+            <div class="modal-action">
+                <button onclick="document.getElementById('modal-qr-url').close()" class="btn btn-ghost rounded-2xl">닫기</button>
+                <button onclick="updateQrUrl()" class="btn btn-primary rounded-2xl">QR 코드 갱신</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- ========================================== -->
+    <!-- 모달 4: 최종 투표 결과 발표 모달 (1, 2, 3등)  -->
+    <!-- ========================================== -->
+    <dialog id="modal-results" class="modal">
+        <div class="modal-box rounded-3xl p-6 sm:p-10 max-w-3xl bg-base-100 border-4 border-primary/30 relative overflow-hidden">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">✕</button>
+            </form>
+
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-1.5 badge badge-accent badge-lg font-extrabold py-4 px-5 mb-3 shadow-sm">
+                    <i data-lucide="crown" class="w-4 h-4"></i>
+                    FINAL RESULTS
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-base-content">
+                    2026 금산여중 복면 가왕 결과
+                </h2>
+                <p class="text-sm text-base-content/70 mt-2">
+                    총 <span id="result-total-votes" class="font-extrabold text-primary text-base">0</span>명의 학생이 소중한 한 표를 행사했습니다!
+                </p>
+            </div>
+
+            <!-- 1, 2, 3등 시상대(Podium) 영역 -->
+            <div id="podium-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-8">
+                <!-- JS로 2등, 1등, 3등 순서로 화려하게 렌더링 -->
+            </div>
+
+            <!-- 4등 이하 전체 순위 요약 -->
+            <div id="other-ranks-container" class="bg-base-200/70 rounded-2xl p-4 space-y-2 hidden">
+                <h4 class="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-2">기타 참가팀 득표 현황</h4>
+                <div id="other-ranks-list" class="space-y-2"></div>
+            </div>
+
+            <div class="modal-footer mt-6 flex justify-center">
+                <button onclick="fireConfetti()" class="btn btn-primary rounded-2xl font-bold gap-2">
+                    <i data-lucide="party-popper" class="w-5 h-5"></i> 축하 꽃가루 터뜨리기!
+                </button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- ========================================== -->
+    <!-- 모달 5: 득표수 초기화 확인 모달              -->
+    <!-- ========================================== -->
+    <dialog id="modal-reset-confirm" class="modal">
+        <div class="modal-box rounded-3xl p-6 max-w-sm text-center">
+            <div class="w-12 h-12 rounded-full bg-error/15 text-error flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-extrabold text-lg">득표수를 모두 초기화할까요?</h3>
+            <p class="text-sm text-base-content/70 mt-1 mb-5">
+                참가팀 목록은 유지되지만, 모든 팀의 투표수가 0표로 돌아갑니다.
+            </p>
+            <div class="flex justify-center gap-2">
+                <button onclick="document.getElementById('modal-reset-confirm').close()" class="btn btn-ghost rounded-2xl flex-1">취소</button>
+                <button onclick="confirmResetVotes()" class="btn btn-error rounded-2xl flex-1 font-bold">초기화하기</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- ========================================== -->
+    <!-- JavaScript 애플리케이션 로직               -->
+    <!-- ========================================== -->
+    <script>
+        // 1. 초기 상태 및 데이터 설정
+        let teams = [
+            {
+                id: 'team-1',
+                name: '황금 가면 꾀꼬리',
+                description: '맑고 청아한 고음으로 금산여중 강당을 울릴 보컬 강자!',
+                image: 'https://api.dicebear.com/7.x/bottts/svg?seed=nightingale&backgroundColor=ffdfbf',
+                votes: 0
+            },
+            {
+                id: 'team-2',
+                name: '신비한 보랏빛 달토끼',
+                description: '달콤한 음색과 감성적인 무대로 여러분의 마음을 사로잡을게요.',
+                image: 'https://api.dicebear.com/7.x/bottts/svg?seed=moonrabbit&backgroundColor=c0aede',
+                votes: 0
+            },
+            {
+                id: 'team-3',
+                name: '폭풍 성량 썬더캣',
+                description: '속이 뻥 뚫리는 시원한 가창력! 무대를 뒤집어 놓겠습니다!',
+                image: 'https://api.dicebear.com/7.x/bottts/svg?seed=thundercat&backgroundColor=b6e3f4',
+                votes: 0
+            }
+        ];
+
+        // 타이머 상태 변수
+        let initialSeconds = 180; // 기본 3분 (180초)
+        let remainingSeconds = 180;
+        let timerInterval = null;
+        let isTimerRunning = false;
+        let isVotingFinished = false;
+
+        // 전교생 총 인원수 상태
+        let totalStudents = 100;
+
+        // 학생 1인 1표 제한 상태 (세션 내 메모리 및 URL 파라미터 확인)
+        let hasStudentVoted = false;
+        let studentVotedTeamId = null;
+
+        // QR 코드 인스턴스
+        let qrSmall = null;
+        let qrLarge = null;
+        let currentQrUrl = '';
+
+        // 2. 페이지 로드 시 초기화
+        window.onload = function() {
+            // URL 파라미터로 '?mode=student'가 들어온 경우(QR 스캔 접속 시) 학생 투표 모드로 즉시 전환
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialMode = urlParams.get('mode') === 'student' ? 'student' : 'admin';
+
+            // QR 코드에 담길 학생 투표용 URL 생성
+            const baseUrl = window.location.href.split('?')[0];
+            currentQrUrl = `${baseUrl}?mode=student`;
+            document.getElementById('input-qr-url').value = currentQrUrl;
+
+            generateQRCodes(currentQrUrl);
+            updateTimerUI();
+            renderAll();
+            switchMode(initialMode);
+            lucide.createIcons();
+        };
+
+        // 3. 토스트 알림 메시지 표시 함수 (alert 대체)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const alertClass = {
+                'success': 'alert-success',
+                'error': 'alert-error',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            }[type] || 'alert-info';
+
+            const toast = document.createElement('div');
+            toast.className = `alert ${alertClass} shadow-lg rounded-2xl text-sm font-bold py-3 px-5 transition-all duration-300`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        // 4. 화면 모드 전환 (진행자 화면 <-> 학생 투표 화면)
+        function switchMode(mode) {
+            const adminView = document.getElementById('admin-view');
+            const studentView = document.getElementById('student-view');
+            const btnAdmin = document.getElementById('btn-mode-admin');
+            const btnStudent = document.getElementById('btn-mode-student');
+
+            if (mode === 'admin') {
+                adminView.classList.remove('hidden');
+                studentView.classList.add('hidden');
+                btnAdmin.classList.add('btn-primary');
+                btnAdmin.classList.remove('btn-ghost');
+                btnStudent.classList.remove('btn-primary');
+                btnStudent.classList.add('btn-ghost');
+            } else {
+                adminView.classList.add('hidden');
+                studentView.classList.remove('hidden');
+                btnStudent.classList.add('btn-primary');
+                btnStudent.classList.remove('btn-ghost');
+                btnAdmin.classList.remove('btn-primary');
+                btnAdmin.classList.add('btn-ghost');
+                renderStudentView();
+            }
+            lucide.createIcons();
+        }
+
+        // 5. QR 코드 생성 및 갱신
+        function generateQRCodes(url) {
+            const smallEl = document.getElementById('qrcode');
+            const largeEl = document.getElementById('qrcode-large');
+            smallEl.innerHTML = '';
+            largeEl.innerHTML = '';
+
+            qrSmall = new QRCode(smallEl, {
+                text: url,
+                width: 130,
+                height: 130,
+                colorDark: "#1f2937",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            qrLarge = new QRCode(largeEl, {
+                text: url,
+                width: 240,
+                height: 240,
+                colorDark: "#1f2937",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function openQrZoomModal() {
+            document.getElementById('modal-qr-zoom').showModal();
+        }
+
+        function openCustomQrModal() {
+            document.getElementById('modal-qr-url').showModal();
+        }
+
+        function updateQrUrl() {
+            const newUrl = document.getElementById('input-qr-url').value.trim();
+            if (!newUrl) {
+                showToast('유효한 URL 주소를 입력해 주세요.', 'warning');
+                return;
+            }
+            currentQrUrl = newUrl;
+            generateQRCodes(currentQrUrl);
+            document.getElementById('modal-qr-url').close();
+            showToast('QR 코드 주소가 업데이트되었습니다!', 'success');
+        }
+
+        // 6. 타이머 설정 및 제어 로직
+        function formatTime(totalSec) {
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function applyTimerSetting() {
+            if (isTimerRunning) {
+                showToast('타이머 작동 중에는 시간을 변경할 수 없습니다.', 'warning');
+                return;
+            }
+            const mins = Math.max(0, Math.min(60, parseInt(document.getElementById('input-minutes').value) || 0));
+            const secs = Math.max(0, Math.min(59, parseInt(document.getElementById('input-seconds').value) || 0));
+            
+            if (mins === 0 && secs === 0) {
+                showToast('최소 1초 이상 설정해 주세요.', 'warning');
+                return;
+            }
+
+            initialSeconds = mins * 60 + secs;
+            remainingSeconds = initialSeconds;
+            isVotingFinished = false;
+            
+            document.getElementById('btn-show-results').classList.add('hidden');
+            updateTimerUI();
+            renderStudentView();
+            showToast(`투표 시간이 ${mins}분 ${secs}초로 설정되었습니다.`, 'info');
+        }
+
+        function toggleTimer() {
+            if (isVotingFinished && remainingSeconds === 0) {
+                showToast('시간이 종료되었습니다. 다시 시작하려면 시간 리셋을 눌러주세요.', 'warning');
+                return;
+            }
+
+            if (isTimerRunning) {
+                // 일시정지
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                updateTimerUI();
+                showToast('투표 타이머가 일시정지되었습니다.', 'info');
+            } else {
+                // 시작
+                if (teams.length < 2) {
+                    showToast('최소 2팀 이상의 참가팀이 있어야 투표를 시작할 수 있습니다.', 'warning');
+                    return;
+                }
+                isTimerRunning = true;
+                updateTimerUI();
+                showToast('투표가 시작되었습니다! 학생들에게 QR 코드를 보여주세요.', 'success');
+
+                timerInterval = setInterval(() => {
+                    remainingSeconds--;
+                    updateTimerUI();
+
+                    if (remainingSeconds <= 0) {
+                        finishVoting('time');
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            isVotingFinished = false;
+            remainingSeconds = initialSeconds;
+            document.getElementById('btn-show-results').classList.add('hidden');
+            updateTimerUI();
+            renderAll();
+            showToast('타이머가 초기화되었습니다.', 'info');
+        }
+
+        function finishVoting(reason = 'time') {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            isVotingFinished = true;
+            if (reason === 'time') {
+                remainingSeconds = 0;
+            }
+            updateTimerUI();
+            renderAll();
+
+            // '투표 결과 확인하기' 버튼 활성화
+            const resultBtn = document.getElementById('btn-show-results');
+            resultBtn.classList.remove('hidden');
+            
+            if (reason === 'all_voted') {
+                showToast(`전교생(${totalStudents}명) 투표가 모두 완료되어 투표가 조기 종료되었습니다! 결과를 확인해 주세요.`, 'success');
+            } else {
+                showToast('투표 시간이 종료되었습니다! 결과를 확인해 주세요.', 'success');
+            }
+        }
+
+        function updateTimerUI() {
+            const formatted = formatTime(remainingSeconds);
+            document.getElementById('timer-display').textContent = formatted;
+            document.getElementById('student-timer-display').textContent = formatted;
+            document.getElementById('modal-timer-display').textContent = formatted;
+
+            const percent = initialSeconds > 0 ? (remainingSeconds / initialSeconds) * 100 : 0;
+            document.getElementById('timer-progress').value = percent;
+
+            const statusBadge = document.getElementById('voting-status-badge');
+            const toggleBtn = document.getElementById('btn-timer-toggle');
+            const timerInputs = document.getElementById('timer-inputs');
+
+            if (isVotingFinished) {
+                statusBadge.textContent = '투표 종료됨';
+                statusBadge.className = 'badge badge-error font-bold py-3 px-3';
+                toggleBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>투표 종료</span>`;
+                toggleBtn.disabled = true;
+                timerInputs.classList.remove('opacity-50', 'pointer-events-none');
+            } else if (isTimerRunning) {
+                statusBadge.textContent = '투표 진행 중';
+                statusBadge.className = 'badge badge-success font-bold py-3 px-3 animate-pulse';
+                toggleBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i><span>일시정지</span>`;
+                toggleBtn.disabled = false;
+                timerInputs.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                statusBadge.textContent = '투표 대기 중';
+                statusBadge.className = 'badge badge-neutral font-bold py-3 px-3';
+                toggleBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>투표 시작</span>`;
+                toggleBtn.disabled = false;
+                timerInputs.classList.remove('opacity-50', 'pointer-events-none');
+            }
+            lucide.createIcons();
+        }
+
+        // 7. 참가팀 추가 및 삭제 관리
+        let currentPreviewImage = 'https://api.dicebear.com/7.x/bottts/svg?seed=mask1&backgroundColor=ffd5dc';
+
+        function openAddTeamModal() {
+            document.getElementById('form-add-team').reset();
+            pickRandomMaskAvatar();
+            document.getElementById('modal-add-team').showModal();
+        }
+
+        function pickRandomMaskAvatar() {
+            const seeds = ['angel', 'king', 'queen', 'star', 'melody', 'flower', 'swan', 'fox', 'panda', 'tiger'];
+            const colors = ['ffd5dc', 'ffdfbf', 'c0aede', 'b6e3f4', 'd1d4f9'];
+            const randomSeed = seeds[Math.floor(Math.random() * seeds.length)] + Math.floor(Math.random() * 100);
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            currentPreviewImage = `https://api.dicebear.com/7.x/bottts/svg?seed=${randomSeed}&backgroundColor=${randomColor}`;
+            document.getElementById('preview-team-img').src = currentPreviewImage;
+        }
+
+        function previewUploadedImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentPreviewImage = e.target.result;
+                document.getElementById('preview-team-img').src = currentPreviewImage;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleAddTeam(event) {
+            event.preventDefault();
+            const nameInput = document.getElementById('team-name').value.trim();
+            const descInput = document.getElementById('team-desc').value.trim();
+
+            if (!nameInput || !descInput) {
+                showToast('팀명과 설명을 모두 입력해 주세요.', 'warning');
+                return;
+            }
+
+            const newTeam = {
+                id: 'team-' + Date.now(),
+                name: nameInput,
+                description: descInput,
+                image: currentPreviewImage,
+                votes: 0
+            };
+
+            teams.push(newTeam);
+            document.getElementById('modal-add-team').close();
+            renderAll();
+            showToast(`'${nameInput}' 팀이 성공적으로 등록되었습니다!`, 'success');
+        }
+
+        function deleteTeam(teamId) {
+            if (isTimerRunning) {
+                showToast('투표 진행 중에는 팀을 삭제할 수 없습니다.', 'warning');
+                return;
+            }
+            const target = teams.find(t => t.id === teamId);
+            teams = teams.filter(t => t.id !== teamId);
+            
+            if (studentVotedTeamId === teamId) {
+                hasStudentVoted = false;
+                studentVotedTeamId = null;
+            }
+            renderAll();
+            if (target) {
+                showToast(`'${target.name}' 팀이 삭제되었습니다.`, 'info');
+            }
+        }
+
+        // 8. 학생 투표 처리 (1인 1표 제한)
+        function castStudentVote(teamId) {
+            if (isVotingFinished) {
+                showToast('이미 투표 시간이 종료되었습니다.', 'error');
+                return;
+            }
+            if (hasStudentVoted) {
+                showToast('이미 투표를 완료하셨습니다. (1인 1표 제한)', 'warning');
+                return;
+            }
+
+            const targetTeam = teams.find(t => t.id === teamId);
+            if (!targetTeam) return;
+
+            targetTeam.votes += 1;
+            hasStudentVoted = true;
+            studentVotedTeamId = teamId;
+
+            const currentTotal = teams.reduce((sum, t) => sum + t.votes, 0);
+            if (currentTotal >= totalStudents && !isVotingFinished) {
+                finishVoting('all_voted');
+            } else {
+                renderAll();
+                showToast(`'${targetTeam.name}' 팀에 소중한 한 표를 투표했습니다!`, 'success');
+            }
+        }
+
+        // 테스트용 내 투표 기록 초기화
+        function resetMyStudentVote() {
+            if (hasStudentVoted && studentVotedTeamId) {
+                const targetTeam = teams.find(t => t.id === studentVotedTeamId);
+                if (targetTeam && targetTeam.votes > 0) {
+                    targetTeam.votes -= 1;
+                }
+            }
+            hasStudentVoted = false;
+            studentVotedTeamId = null;
+            renderAll();
+            showToast('내 투표 기록이 초기화되었습니다. 다시 투표할 수 있습니다.', 'info');
+        }
+
+        // 가상 학생 투표 시뮬레이션
+        function simulateStudentVotes(count) {
+            if (isVotingFinished) {
+                showToast('이미 투표가 종료되었습니다.', 'warning');
+                return;
+            }
+            if (teams.length === 0) {
+                showToast('투표할 참가팀이 없습니다.', 'warning');
+                return;
+            }
+            const currentTotal = teams.reduce((sum, t) => sum + t.votes, 0);
+            const remaining = Math.max(0, totalStudents - currentTotal);
+            if (remaining === 0) {
+                finishVoting('all_voted');
+                return;
+            }
+            const actualAdd = Math.min(count, remaining);
+            for (let i = 0; i < actualAdd; i++) {
+                const randomIndex = Math.floor(Math.random() * teams.length);
+                teams[randomIndex].votes += 1;
+            }
+            
+            const newTotal = currentTotal + actualAdd;
+            if (newTotal >= totalStudents && !isVotingFinished) {
+                finishVoting('all_voted');
+            } else {
+                renderAll();
+                showToast(`학생 +${actualAdd}명이 투표를 완료했습니다!`, 'info');
+            }
+        }
+
+        // 전교생 총 인원수 설정 업데이트
+        function updateTotalStudents() {
+            const inputEl = document.getElementById('input-total-students');
+            const val = parseInt(inputEl.value, 10);
+            if (isNaN(val) || val < 1) {
+                showToast('전교생 인원은 최소 1명 이상이어야 합니다.', 'warning');
+                inputEl.value = totalStudents;
+                return;
+            }
+            totalStudents = val;
+            
+            const currentTotal = teams.reduce((sum, t) => sum + t.votes, 0);
+            if (currentTotal >= totalStudents && !isVotingFinished && currentTotal > 0) {
+                finishVoting('all_voted');
+            } else {
+                renderAll();
+                showToast(`전교생 총 인원수가 ${totalStudents}명으로 설정되었습니다.`, 'success');
+            }
+        }
+
+        // 투표 현황 초기화 모달 열기 및 실행
+        function openResetVotesModal() {
+            document.getElementById('modal-reset-confirm').showModal();
+        }
+
+        function confirmResetVotes() {
+            teams.forEach(t => t.votes = 0);
+            hasStudentVoted = false;
+            studentVotedTeamId = null;
+            document.getElementById('modal-reset-confirm').close();
+            renderAll();
+            showToast('모든 투표 현황이 0명으로 초기화되었습니다.', 'info');
+        }
+
+        // 9. 화면 전체 렌더링 함수
+        function renderAll() {
+            const totalVotes = teams.reduce((sum, t) => sum + t.votes, 0);
+            const remainingStudents = Math.max(0, totalStudents - totalVotes);
+            const turnoutPercent = totalStudents > 0 ? Math.min(100, Math.round((totalVotes / totalStudents) * 100)) : 0;
+
+            // 상단 및 현황판 숫자 업데이트
+            document.getElementById('header-total-votes').textContent = totalVotes;
+            document.getElementById('voted-count-display').textContent = totalVotes;
+            document.getElementById('total-students-display').textContent = totalStudents;
+            document.getElementById('turnout-percent-display').textContent = turnoutPercent;
+            document.getElementById('remaining-students-display').textContent = remainingStudents;
+            document.getElementById('turnout-progress').value = turnoutPercent;
+            document.getElementById('team-count').textContent = teams.length;
+
+            renderAdminTeams();
+            renderStudentView();
+            lucide.createIcons();
+        }
+
+        // 관리자 화면 참가팀 목록 렌더링 (득표수 비공개 처리)
+        function renderAdminTeams() {
+            const grid = document.getElementById('admin-teams-grid');
+            if (teams.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-base-200/50 rounded-3xl border-2 border-dashed border-base-300">
+                        <p class="text-base-content/60 font-bold mb-2">아직 등록된 참가팀이 없습니다.</p>
+                        <button onclick="openAddTeamModal()" class="btn btn-sm btn-primary rounded-xl">첫 번째 참가팀 추가하기</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = teams.map((team, idx) => `
+                <div class="card bg-base-200/60 border border-base-300 rounded-3xl overflow-hidden hover:shadow-md transition-all">
+                    <figure class="relative h-44 bg-base-100">
+                        <img src="${team.image}" alt="${team.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/ffd5dc/333333?text=Masked+Singer'" />
+                        <div class="badge badge-neutral absolute top-3 left-3 font-bold shadow">기호 ${idx + 1}번</div>
+                        <button onclick="deleteTeam('${team.id}')" class="btn btn-circle btn-xs btn-error absolute top-3 right-3 shadow" title="팀 삭제">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </figure>
+                    <div class="card-body p-4">
+                        <h3 class="font-extrabold text-lg text-base-content truncate">${team.name}</h3>
+                        <p class="text-xs text-base-content/70 line-clamp-2 min-h-[2rem]">${team.description}</p>
+                        <div class="mt-2 pt-2 border-t border-base-300/70 flex items-center justify-between text-xs font-bold text-base-content/60">
+                            <span>참가 상태</span>
+                            <span class="badge badge-ghost badge-sm font-bold">투표 후보 등록됨</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 학생 투표 화면 렌더링
+        function renderStudentView() {
+            const votedBanner = document.getElementById('student-voted-banner');
+            const closedBanner = document.getElementById('student-closed-banner');
+            const listContainer = document.getElementById('student-teams-list');
+
+            if (isVotingFinished) {
+                closedBanner.classList.remove('hidden');
+            } else {
+                closedBanner.classList.add('hidden');
+            }
+
+            if (hasStudentVoted) {
+                votedBanner.classList.remove('hidden');
+                const myTeam = teams.find(t => t.id === studentVotedTeamId);
+                document.getElementById('my-voted-team-name').textContent = myTeam ? myTeam.name : '알 수 없음';
+            } else {
+                votedBanner.classList.add('hidden');
+            }
+
+            listContainer.innerHTML = teams.map((team, idx) => {
+                const isMyChoice = studentVotedTeamId === team.id;
+                const isDisabled = hasStudentVoted || isVotingFinished;
+
+                return `
+                    <div class="card bg-base-100 border-2 ${isMyChoice ? 'border-success bg-success/5' : 'border-base-300'} rounded-3xl shadow-sm overflow-hidden transition-all">
+                        <figure class="relative h-44 bg-base-200">
+                            <img src="${team.image}" alt="${team.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/ffd5dc/333333?text=Masked+Singer'" />
+                            <div class="badge badge-primary absolute top-3 left-3 font-extrabold shadow">기호 ${idx + 1}번</div>
+                            ${isMyChoice ? '<div class="badge badge-success absolute top-3 right-3 font-bold gap-1 shadow"><i data-lucide="check" class="w-3 h-3"></i> 내 선택</div>' : ''}
+                        </figure>
+                        <div class="card-body p-5">
+                            <h3 class="font-extrabold text-lg text-base-content">${team.name}</h3>
+                            <p class="text-xs text-base-content/70 mb-3">${team.description}</p>
+                            <button onclick="castStudentVote('${team.id}')" ${isDisabled ? 'disabled' : ''} class="btn ${isMyChoice ? 'btn-success' : 'btn-primary'} w-full rounded-2xl font-bold gap-1.5">
+                                <i data-lucide="${isMyChoice ? 'check-circle' : 'heart'}" class="w-4 h-4"></i>
+                                ${isMyChoice ? '투표 완료!' : (isVotingFinished ? '투표 마감' : '이 팀에 투표하기')}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // 10. 최종 투표 결과 발표 모달 (1, 2, 3등 시상대)
+        function openResultsModal() {
+            const totalVotes = teams.reduce((sum, t) => sum + t.votes, 0);
+            document.getElementById('result-total-votes').textContent = totalVotes;
+
+            // 득표순 정렬
+            const sorted = [...teams].sort((a, b) => b.votes - a.votes);
+            const podiumContainer = document.getElementById('podium-container');
+            const otherContainer = document.getElementById('other-ranks-container');
+            const otherList = document.getElementById('other-ranks-list');
+
+            const first = sorted[0];
+            const second = sorted[1];
+            const third = sorted[2];
+
+            const buildPodiumCard = (team, rank, heightClass, badgeClass, bgClass) => {
+                if (!team) return `<div class="hidden md:block"></div>`;
+                return `
+                    <div class="flex flex-col items-center text-center ${rank === 1 ? 'order-1 md:order-2' : rank === 2 ? 'order-2 md:order-1' : 'order-3'}">
+                        <div class="relative mb-3">
+                            ${rank === 1 ? '<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-warning animate-bounce"><i data-lucide="crown" class="w-8 h-8 fill-warning"></i></div>' : ''}
+                            <img src="${team.image}" alt="${team.name}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-base-100 shadow-lg bg-base-200" />
+                            <span class="badge ${badgeClass} font-black absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-2.5 shadow">${rank}등</span>
+                        </div>
+                        <h4 class="font-extrabold text-base sm:text-lg text-base-content line-clamp-1 px-1">${team.name}</h4>
+                        <div class="w-full ${bgClass} ${heightClass} rounded-t-3xl mt-3 p-4 flex flex-col items-center justify-center text-neutral shadow-md">
+                            <span class="text-2xl sm:text-3xl font-black">${team.votes}표</span>
+                            <span class="text-xs font-bold opacity-80 mt-0.5">
+                                (${totalVotes > 0 ? Math.round((team.votes / totalVotes) * 100) : 0}%)
+                            </span>
+                        </div>
+                    </div>
+                `;
+            };
+
+            podiumContainer.innerHTML =
+                buildPodiumCard(second, 2, 'h-32 sm:h-36', 'badge-neutral', 'podium-2') +
+                buildPodiumCard(first, 1, 'h-40 sm:h-48', 'badge-warning', 'podium-1') +
+                buildPodiumCard(third, 3, 'h-28 sm:h-32', 'badge-accent', 'podium-3');
+
+            if (sorted.length > 3) {
+                otherContainer.classList.remove('hidden');
+                otherList.innerHTML = sorted.slice(3).map((team, idx) => `
+                    <div class="flex items-center justify-between bg-base-100 px-4 py-2.5 rounded-xl text-sm font-bold">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-ghost font-extrabold">${idx + 4}등</span>
+                            <span>${team.name}</span>
+                        </div>
+                        <span class="text-primary font-extrabold">${team.votes}표</span>
+                    </div>
+                `).join('');
+            } else {
+                otherContainer.classList.add('hidden');
+            }
+
+            document.getElementById('modal-results').showModal();
+            lucide.createIcons();
+            fireConfetti();
+        }
+
+        // 축포 애니메이션
+        function fireConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
